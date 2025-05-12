@@ -1,26 +1,25 @@
 // app/success/page.tsx
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
 import Confetti from "react-confetti";
 
 export default function SuccessPage() {
-  const [isClient, setIsClient] = useState(false);
+  const [mounted, setMounted] = useState(false);
 
-  // Only run on client side
   useEffect(() => {
-    setIsClient(true);
+    setMounted(true);
   }, []);
 
   return (
     <div className="p-6 text-center max-w-xl mx-auto">
-      {/* Confetti only renders on client */}
-      {isClient && <Confetti width={window.innerWidth} height={window.innerHeight} />}
+      {/* Only render confetti after mount (client-side) */}
+      {mounted && <Confetti width={window.innerWidth} height={window.innerHeight} />}
 
       <h1 className="text-3xl font-bold mb-4 text-green-400">Tip Sent Successfully!</h1>
       <p className="mb-6 text-white">Thank you for tipping with Solana 💙</p>
 
-      {/* Tweet Intent Button */}
+      {/* Safe use of window */}
       <a
         href={`https://twitter.com/intent/tweet?text=Just+sent+a+tip+on+Solana+via+%40solanatip+%F0%9F%92%A6&url= ${encodeURIComponent(
           typeof window !== "undefined" ? window.location.origin : "https://yourdomain.com "
