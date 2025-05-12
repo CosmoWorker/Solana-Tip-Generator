@@ -17,7 +17,7 @@ import { WalletModalProvider } from '@solana/wallet-adapter-react-ui';
 
 const network = WalletAdapterNetwork.Devnet;
 
-const endpoint = 'https://api.devnet.solana.com';
+const endpoint = 'https://solana-devnet.g.alchemy.com/v2/7Jq6qMlv9qxuxToEgeNH5nbdUOPJ8QFI';
 
 export const SolanaWalletProvider: FC<{ children: ReactNode }> = ({ children }) => {
   const wallets = useMemo(
