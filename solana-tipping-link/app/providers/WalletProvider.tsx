@@ -11,13 +11,10 @@ import {
   TrezorWalletAdapter,
   LedgerWalletAdapter
 } from '@solana/wallet-adapter-wallets';
-import { WalletAdapterNetwork } from '@solana/wallet-adapter-base';
 import { WalletModalProvider } from '@solana/wallet-adapter-react-ui';
 
-
-const network = WalletAdapterNetwork.Devnet;
-
-const endpoint = 'https://solana-devnet.g.alchemy.com/v2/7Jq6qMlv9qxuxToEgeNH5nbdUOPJ8QFI';
+const rawRpcUrl = process.env.NEXT_PUBLIC_SOLANA_RPC_URL;
+const endpoint = rawRpcUrl ? rawRpcUrl : 'https://api.devnet.solana.com ';
 
 export const SolanaWalletProvider: FC<{ children: ReactNode }> = ({ children }) => {
   const wallets = useMemo(
