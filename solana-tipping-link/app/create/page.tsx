@@ -11,7 +11,6 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Separator } from "@/components/ui/separator";
-import bs58 from "bs58";
 import { WalletMultiButton } from "@solana/wallet-adapter-react-ui";
 import { Zap } from "lucide-react";
 
@@ -38,15 +37,22 @@ export default function CreatePage() {
   });
 
   const handleGenerate = (values: z.infer<typeof formSchema>) => {
-    if (!publicKey) return;
+    if (!publicKey ) return;
 
     const payload = JSON.stringify({
       to: publicKey.toBase58(),
       amount: values.amount,
-      message: values.message,
+      message: values.message?.trim(),
     });
 
-    const encoded = bs58.encode(Buffer.from(payload));
+    try{
+      JSON.parse(payload);
+    }catch(e){
+      console.log("Invalid payload JSON");
+      return;
+    }
+
+    const encoded = Buffer.from(payload).toString("base64");
     setGeneratedLink(`${window.location.origin}/send/${encoded}`);
   };
 

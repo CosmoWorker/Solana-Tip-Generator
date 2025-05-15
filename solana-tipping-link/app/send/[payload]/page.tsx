@@ -1,105 +1,185 @@
-// app/send/[payload]/page.tsx
 "use client";
 
-import { useWallet, useConnection } from "@solana/wallet-adapter-react";
+import { useState, useEffect } from "react";
+import { useParams } from "next/navigation";
+import { useConnection, useWallet } from "@solana/wallet-adapter-react";
+import { LAMPORTS_PER_SOL, PublicKey, SystemProgram, Transaction } from "@solana/web3.js";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
+import { toast } from "sonner"; // ✅ Use toast from 'sonner'
+import { Copy, Wallet, CheckCircle2, ArrowLeft } from "lucide-react";
+import Link from "next/link";
 import { WalletMultiButton } from "@solana/wallet-adapter-react-ui";
-import React, { useEffect, useState } from "react";
-import bs58 from "bs58";
-import { sendSolanaTransaction } from "@/lib/sendSolanaTransaction";
-import { PublicKey } from "@solana/web3.js";
 
-export default function SendPage({ params }: { params: Promise<{ payload: string }> }) {
-  const [data, setData] = useState<{ to: string; amount: string; message?: string } | null>(null);
-  const [error, setError] = useState("");
-  const [status, setStatus] = useState("");
+interface TipData {
+  to: string;
+  amount: string;
+  message?: string;
+}
+
+export default function SendPage() {
+  const params = useParams<{ payload: string }>();
+  const [tipData, setTipData] = useState<TipData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [sending, setSending] = useState(false);
+  const [success, setSuccess] = useState(false);
+  const { connection } = useConnection();
   const { connected, publicKey, sendTransaction } = useWallet();
-  const { connection } = useConnection(); // Ensure we're using the correct connection
-  const resolvedParams = React.use(params);
 
   useEffect(() => {
     try {
-      const decoded = bs58.decode(resolvedParams.payload);
-      const json = Buffer.from(decoded).toString("utf-8");
-      setData(JSON.parse(json));
-    } catch (e) {
-      setError("Invalid or corrupted tip link.");
+      const decodedPayload = Buffer.from(params.payload, "base64").toString("utf-8");
+      console.log("decoded payload: ", decodedPayload);
+      const parsedData = JSON.parse(decodedPayload) as TipData;
+      setTipData(parsedData);
+    } catch (error) {
+      console.error("Failed to parse payload:", error);
+    } finally {
+      setLoading(false);
     }
-  }, [resolvedParams.payload]);
+  }, [params.payload]);
 
-  const handleSend = async () => {
-    if (!data || !publicKey || !sendTransaction) {
-      setStatus("❌ Missing required data or wallet not connected");
-      return;
-    }
-
-    const recipientPubkey = new PublicKey(data.to);
-    if (!PublicKey.isOnCurve(recipientPubkey)) {
-      setStatus("❌ Invalid recipient public key");
-      return;
-    }
-
-    const amount = parseFloat(data.amount);
-    if (isNaN(amount) || amount <= 0) {
-      setStatus("❌ Invalid amount");
+  const sendTip = async () => {
+    if (!tipData || !connected || !publicKey || !sendTransaction) {
+      toast.error("Wallet not connected. Please connect your wallet to send a tip.");
       return;
     }
 
     try {
-      setStatus("📡 Sending transaction...");
-      console.log("📤 Transaction Data:");
-      console.log("From:", publicKey.toBase58());
-      console.log("To:", recipientPubkey.toBase58());
-      console.log("Amount:", amount);
+      setSending(true);
 
-      await sendSolanaTransaction({
-        to: data.to,
-        amount,
-        sendTransaction,
-        publicKey,
-        connection,
+      const receiverPublicKey = new PublicKey(tipData.to);
+
+      const transaction = new Transaction().add(
+        SystemProgram.transfer({
+          fromPubkey: publicKey,
+          toPubkey: receiverPublicKey,
+          lamports: parseFloat(tipData.amount) * LAMPORTS_PER_SOL,
+        })
+      );
+
+      const signature = await sendTransaction(transaction, connection);
+
+      setSuccess(true);
+      setSending(false);
+
+      toast.success("Tip sent successfully!", {
+        description: `Transaction ID: ${signature.substring(0, 10)}...`,
       });
+    } catch (error) {
+      console.error("Error sending tip:", error);
+      setSending(false);
 
-      setStatus("✅ Transaction successful!");
-      setTimeout(() => {
-        window.location.href = "/success";
-      }, 1500);
-    } catch (err: any) {
-      console.error("🚫 Transaction failed:", err.message || err);
-      setStatus(`❌ Transaction failed: ${err.message || "Unknown error"}`);
+      toast.error("Transaction failed. Please try again.");
     }
   };
 
-  if (error) return <p className="text-red-500">{error}</p>;
-  if (!data) return <p>Loading...</p>;
+  if (loading) {
+    return (
+      <div className="container flex min-h-screen flex-col py-24 items-center justify-center">
+        <div className="w-full max-w-md text-center">
+          <div className="animate-pulse">Loading tip information...</div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!tipData) {
+    return (
+      <div className="container flex min-h-screen flex-col py-24 items-center justify-center">
+        <div className="w-full max-w-md text-center">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-destructive">Invalid Link</CardTitle>
+              <CardDescription>
+                The tip link you're trying to access is invalid or has expired.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Link href="/" passHref>
+                <Button>Return to Homepage</Button>
+              </Link>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="p-6 max-w-xl mx-auto">
-      <h1 className="text-2xl font-bold mb-4 text-white">Send Tip</h1>
+    <div className="container flex min-h-screen flex-col py-24 items-center justify-center">
+      <div className="w-full max-w-md">
+        <div className="flex items-center mb-6">
+          <Link href="/" className="text-muted-foreground hover:text-foreground">
+            <ArrowLeft className="mr-2 h-4 w-4 inline" />
+            Back to home
+          </Link>
+          <div className="flex-1"></div>
+          {/* <WalletMultiButton /> */}
+        </div>
 
-      <p className="mb-2 text-gray-300">Recipient: {data.to}</p>
-      <p className="mb-2 text-gray-300">Amount: {data.amount} SOL</p>
-      {data.message && <p className="mb-4 italic text-gray-400">"{data.message}"</p>}
-
-      {!connected ? (
-        <>
-          <p className="mb-4 text-yellow-400">Connect wallet to send tip</p>
-          <WalletMultiButton />
-        </>
-      ) : (
-        <button
-          onClick={handleSend}
-          disabled={status.includes("Sending")}
-          className={`w-full py-2 px-4 rounded font-semibold ${
-            status.includes("Sending")
-              ? "bg-gray-500 cursor-not-allowed"
-              : "bg-green-600 hover:bg-green-700 text-white"
-          }`}
-        >
-          {status.includes("Sending") ? "Sending..." : `Send ${data.amount} SOL`}
-        </button>
-      )}
-
-      {status && <p className="mt-4 text-lg">{status}</p>}
+        <Card className="w-full overflow-hidden">
+          <div className="h-12 bg-gradient-to-r from-violet-600 to-blue-600"></div>
+          <CardHeader>
+            <CardTitle className="text-xl">Send Tip</CardTitle>
+            {tipData.message && ( 
+              <CardDescription>"{tipData.message}"</CardDescription>
+            )}
+          </CardHeader>
+          <CardContent className="space-y-6">
+            {success ? (
+              <div className="text-center p-6 space-y-4">
+                <div className="flex justify-center">
+                  <CheckCircle2 className="h-16 w-16 text-green-500" />
+                </div>
+                <h3 className="text-xl font-semibold">Tip Sent Successfully!</h3>
+                <p className="text-muted-foreground">
+                  Thank you for your support. Your tip has been sent.
+                </p>
+              </div>
+            ) : (
+              <>
+                <div className="mb-4">
+                  <p className="text-muted-foreground">Recipient:</p>
+                  <p className="font-semibold truncate">{tipData.to}</p>
+                </div>
+                <div className="mb-4">
+                  <p className="text-muted-foreground">Amount:</p>
+                  <p className="font-semibold">{tipData.amount} SOL</p>
+                </div>
+                <Separator />
+                <div>
+                  <h3 className="text-lg font-medium mb-2">Send a Tip</h3>
+                  <p className="text-muted-foreground text-sm mb-4">
+                    Connect your Solana wallet to send a tip directly.
+                  </p>
+                  {connected ? (
+                    <Button
+                      className="w-full bg-gradient-to-r from-violet-600 to-blue-600 hover:from-violet-700 hover:to-blue-700"
+                      onClick={sendTip}
+                      disabled={sending}
+                    >
+                      {sending ? (
+                        "Processing..."
+                      ) : (
+                        <>
+                          <Wallet className="mr-2 h-4 w-4" />
+                          Send {tipData.amount} SOL
+                        </>
+                      )}
+                    </Button>
+                  ) : (
+                    <WalletMultiButton
+                      className="w-full bg-gradient-to-r from-violet-600 to-blue-600 hover:from-violet-700 hover:to-blue-700"
+                    />
+                  )}
+                </div>
+              </>
+            )}
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }
