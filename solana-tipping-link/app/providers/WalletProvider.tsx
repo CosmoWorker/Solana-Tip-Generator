@@ -14,7 +14,7 @@ import {
 import { WalletModalProvider } from '@solana/wallet-adapter-react-ui';
 
 const rawRpcUrl = process.env.NEXT_PUBLIC_SOLANA_RPC_URL;
-const endpoint = rawRpcUrl ? rawRpcUrl : 'https://api.devnet.solana.com ';
+const endpoint = rawRpcUrl ? rawRpcUrl : 'https://api.devnet.solana.com';
 
 export const SolanaWalletProvider: FC<{ children: ReactNode }> = ({ children }) => {
   const wallets = useMemo(

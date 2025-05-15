@@ -29,9 +29,10 @@ export default function SendPage() {
 
   useEffect(() => {
     try {
-      const decodedPayload = Buffer.from(params.payload, "base64").toString("utf-8");
-      console.log("decoded payload: ", decodedPayload);
+      let decodedPayload = Buffer.from(params.payload, "base64").toString("utf-8");
+      decodedPayload = decodedPayload.replace(/[^\x20-\x7F]+/g, "").trim();
       const parsedData = JSON.parse(decodedPayload) as TipData;
+      
       setTipData(parsedData);
     } catch (error) {
       console.error("Failed to parse payload:", error);
@@ -109,7 +110,7 @@ export default function SendPage() {
 
   return (
     <div className="container flex min-h-screen flex-col py-24 items-center justify-center">
-      <div className="w-full max-w-md">
+      <div className="w-full max-w-lg">
         <div className="flex items-center mb-6">
           <Link href="/" className="text-muted-foreground hover:text-foreground">
             <ArrowLeft className="mr-2 h-4 w-4 inline" />
@@ -119,44 +120,46 @@ export default function SendPage() {
           {/* <WalletMultiButton /> */}
         </div>
 
-        <Card className="w-full overflow-hidden">
+        <Card className="w-full overflow-hidden border border-gray-700">
           <div className="h-12 bg-gradient-to-r from-violet-600 to-blue-600"></div>
           <CardHeader>
-            <CardTitle className="text-xl">Send Tip</CardTitle>
+            <CardTitle className="text-xl text-white">Send Tip</CardTitle>
             {tipData.message && ( 
-              <CardDescription>"{tipData.message}"</CardDescription>
+              <CardDescription className="text-gray-400">"{tipData.message}"</CardDescription>
             )}
           </CardHeader>
-          <CardContent className="space-y-6">
+          <CardContent className="space-y-6 px-4">
             {success ? (
               <div className="text-center p-6 space-y-4">
                 <div className="flex justify-center">
                   <CheckCircle2 className="h-16 w-16 text-green-500" />
                 </div>
-                <h3 className="text-xl font-semibold">Tip Sent Successfully!</h3>
+                <h3 className="text-xl font-semibold text-white">Tip Sent Successfully!</h3>
                 <p className="text-muted-foreground">
                   Thank you for your support. Your tip has been sent.
                 </p>
               </div>
             ) : (
               <>
-                <div className="mb-4">
+                
+                <div className="w-full">
                   <p className="text-muted-foreground">Recipient:</p>
-                  <p className="font-semibold truncate">{tipData.to}</p>
+                  <p className="font-semibold text-white">{tipData.to}</p>
                 </div>
+                
                 <div className="mb-4">
                   <p className="text-muted-foreground">Amount:</p>
-                  <p className="font-semibold">{tipData.amount} SOL</p>
+                  <p className="font-semibold text-white">{tipData.amount} SOL</p>
                 </div>
-                <Separator />
+                <Separator className="bg-gray-700"/>
                 <div>
-                  <h3 className="text-lg font-medium mb-2">Send a Tip</h3>
+                  <h3 className="text-lg font-medium mb-2 text-white">Send a Tip</h3>
                   <p className="text-muted-foreground text-sm mb-4">
                     Connect your Solana wallet to send a tip directly.
                   </p>
                   {connected ? (
                     <Button
-                      className="w-full bg-gradient-to-r from-violet-600 to-blue-600 hover:from-violet-700 hover:to-blue-700"
+                      className="w-full bg-gradient-to-r from-violet-600 to-blue-600 hover:from-violet-700 hover:to-blue-700 cursor-pointer"
                       onClick={sendTip}
                       disabled={sending}
                     >
