@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner"; // ✅ Use toast from 'sonner'
-import { Copy, Wallet, CheckCircle2, ArrowLeft } from "lucide-react";
+import { Wallet, CheckCircle2, ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { WalletMultiButton } from "@solana/wallet-adapter-react-ui";
 
