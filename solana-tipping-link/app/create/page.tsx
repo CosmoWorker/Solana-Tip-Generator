@@ -45,14 +45,8 @@ export default function CreatePage() {
       message: values.message?.trim(),
     });
 
-    try{
-      JSON.parse(payload);
-    }catch(e){
-      console.log("Invalid payload JSON");
-      return;
-    }
-
-    const encoded = Buffer.from(payload).toString("base64");
+    let encoded = Buffer.from(payload).toString("base64");
+    encoded = encoded.replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
     setGeneratedLink(`${window.location.origin}/send/${encoded}`);
   };
 

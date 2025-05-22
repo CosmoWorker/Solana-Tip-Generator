@@ -1,14 +1,14 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { useConnection, useWallet } from "@solana/wallet-adapter-react";
 import { LAMPORTS_PER_SOL, PublicKey, SystemProgram, Transaction } from "@solana/web3.js";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner"; // ✅ Use toast from 'sonner'
-import { Wallet, CheckCircle2, ArrowLeft } from "lucide-react";
+import { Wallet, CheckCircle2, ArrowLeft} from "lucide-react";
 import Link from "next/link";
 import { WalletMultiButton } from "@solana/wallet-adapter-react-ui";
 
@@ -19,6 +19,7 @@ interface TipData {
 }
 
 export default function SendPage() {
+  const router=useRouter();
   const params = useParams<{ payload: string }>();
   const [tipData, setTipData] = useState<TipData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -31,6 +32,8 @@ export default function SendPage() {
     try {
       let decodedPayload = Buffer.from(params.payload, "base64").toString("utf-8");
       decodedPayload = decodedPayload.replace(/[^\x20-\x7F]+/g, "").trim();
+      console.log("Cleansed payload: ", decodedPayload);
+
       const parsedData = JSON.parse(decodedPayload) as TipData;
       
       setTipData(parsedData);
@@ -61,6 +64,7 @@ export default function SendPage() {
       );
 
       const signature = await sendTransaction(transaction, connection);
+  
 
       setSuccess(true);
       setSending(false);
@@ -68,6 +72,9 @@ export default function SendPage() {
       toast.success("Tip sent successfully!", {
         description: `Transaction ID: ${signature.substring(0, 10)}...`,
       });
+      setTimeout(()=>{}, 750);
+      router.push(`/success?amount=${tipData.amount}&recipient=${tipData.to}`)
+      
     } catch (error) {
       console.error("Error sending tip:", error);
       setSending(false);
