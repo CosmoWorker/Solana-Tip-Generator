@@ -1,18 +1,19 @@
-// app/success/page.tsx
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { Suspense } from "react";
 import { useSearchParams } from "next/navigation";
-import Confetti from "react-confetti";
+import dynamic from "next/dynamic";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Twitter } from "lucide-react";
 import Link from "next/link";
 
-export default function SuccessPage() {
+// Dynamically import Confetti with SSR disabled
+const Confetti = dynamic(() => import("react-confetti"), { ssr: false });
+
+function SuccessContent() {
   const [mounted, setMounted] = useState(false);
-  const router = useRouter();
   const searchParams = useSearchParams();
 
   const amount = searchParams.get("amount");
@@ -44,6 +45,7 @@ export default function SuccessPage() {
 
   return (
     <div className="container flex min-h-screen flex-col py-24 items-center justify-center">
+      {/* Render confetti only after mount */}
       {mounted && <Confetti width={window.innerWidth} height={window.innerHeight} />}
       <Card className="max-w-full">
         <CardHeader>
@@ -53,8 +55,8 @@ export default function SuccessPage() {
           <p className="text-white text-lg">
             You tipped <span className="font-bold">{amount} SOL</span> to{" "}
             <span className="font-bold">{recipient}</span>. 
-            <br></br>
-            <p className="ml-50">Thank you for tipping with Solana 💙</p>
+            <br />
+            <span className="ml-50">Thank you for tipping with Solana 💙</span>
           </p>
           <div className="flex justify-between">
             <Button asChild variant="outline">
@@ -77,5 +79,13 @@ export default function SuccessPage() {
         </CardContent>
       </Card>
     </div>
+  );
+}
+
+export default function SuccessPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <SuccessContent />
+    </Suspense>
   );
 }
