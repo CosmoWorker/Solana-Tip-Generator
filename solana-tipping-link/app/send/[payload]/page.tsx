@@ -32,8 +32,6 @@ export default function SendPage() {
     try {
       let decodedPayload = Buffer.from(params.payload, "base64").toString("utf-8");
       decodedPayload = decodedPayload.replace(/[^\x20-\x7F]+/g, "").trim();
-      console.log("Cleansed payload: ", decodedPayload);
-
       const parsedData = JSON.parse(decodedPayload) as TipData;
       
       setTipData(parsedData);
